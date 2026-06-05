@@ -29,9 +29,16 @@ slides = [
 ]
 
 
-def load_img(fname):
+def load_img(fname, fit=False):
     path = os.path.join(WP_DIR, fname)
     img = Image.open(path).convert("RGB")
+    if fit:
+        # 全体が収まるようにレターボックス（黒背景）
+        img.thumbnail((W, H), Image.LANCZOS)
+        bg = Image.new("RGB", (W, H), (0, 0, 0))
+        offset = ((W - img.width) // 2, (H - img.height) // 2)
+        bg.paste(img, offset)
+        return np.array(bg)[:, :, ::-1]
     w, h = img.size
     side = min(w, h)
     left = (w - side) // 2
@@ -101,7 +108,7 @@ for i, (fname, main_text, sub_text) in enumerate(slides):
     actual_fname = fname
     if fname is None:
         actual_fname = next(f for f in os.listdir(WP_DIR) if "QR" in f or "おでん" in f)
-    raw = load_img(actual_fname)
+    raw = load_img(actual_fname, fit=is_qr)
     frame = add_telop(raw, main_text, sub_text, is_qr=is_qr)
 
     for f in range(total_frames):
