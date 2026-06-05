@@ -9,9 +9,9 @@ OUTPUT = "/home/user/DHPoden/wp/promo.mp4"
 
 W, H = 1080, 1080
 FPS = 30
-IMG_SEC = 4      # 通常スライド表示秒
-QR_SEC = 5       # QR表示秒
-FADE_FRAMES = int(FPS * 0.5)  # フェード0.5秒
+IMG_SEC = 2      # 通常スライド表示秒
+QR_SEC = 6       # QR表示秒（12×2+6=30秒）
+FADE_FRAMES = int(FPS * 0.3)  # フェード0.3秒
 
 # 画像順序とテロップ定義
 slides = [
@@ -87,6 +87,7 @@ def add_telop(frame_bgr, main_text, sub_text):
 
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+OUTPUT = "/home/user/DHPoden/wp/promo30.mp4"
 out = cv2.VideoWriter(OUTPUT, fourcc, FPS, (W, H))
 
 prev_frame = None
