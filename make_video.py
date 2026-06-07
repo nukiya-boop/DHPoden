@@ -32,29 +32,15 @@ slides = [
 def load_img(fname, fit=False):
     path = os.path.join(WP_DIR, fname)
     img = Image.open(path).convert("RGB")
-    if fit:
-        # QR: 全体が収まるよう中央配置（黒背景）
-        img.thumbnail((W, H), Image.LANCZOS)
-        bg = Image.new("RGB", (W, H), (10, 10, 10))
-        offset = ((W - img.width) // 2, (H - img.height) // 2)
-        bg.paste(img, offset)
-        return np.array(bg)[:, :, ::-1]
-    # 通常: 幅基準でリサイズ→中央クロップして1080×1920に
+    # 全画像: アスペクト比を保ったまま幅1080に合わせて中央配置
     w, h = img.size
     scale = W / w
     new_h = int(h * scale)
     img = img.resize((W, new_h), Image.LANCZOS)
-    if new_h < H:
-        # 高さが足りない場合は高さ基準でリサイズ
-        scale = H / h
-        new_w = int(w * scale)
-        img = img.resize((new_w, H), Image.LANCZOS)
-        left = (new_w - W) // 2
-        img = img.crop((left, 0, left + W, H))
-    else:
-        top = (new_h - H) // 2
-        img = img.crop((0, top, W, top + H))
-    return np.array(img)[:, :, ::-1]
+    bg = Image.new("RGB", (W, H), (10, 10, 10))
+    top = (H - new_h) // 2
+    bg.paste(img, (0, top))
+    return np.array(bg)[:, :, ::-1]
 
 
 def add_telop(frame_bgr, main_text, sub_text, is_qr=False):
