@@ -39,19 +39,22 @@ def load_img(fname, fit=False):
         offset = ((W - img.width) // 2, (H - img.height) // 2)
         bg.paste(img, offset)
         return np.array(bg)[:, :, ::-1]
-    # 通常: 幅に合わせてリサイズ→上部クロップ（テロップエリア分残す）
+    # 通常: 幅基準でリサイズ→中央クロップして1080×1920に
     w, h = img.size
     scale = W / w
     new_h = int(h * scale)
     img = img.resize((W, new_h), Image.LANCZOS)
-    # 画像エリアは上部 1080px（正方形分）
-    img_area = min(new_h, W)
-    top = max(0, (new_h - img_area) // 2)
-    img = img.crop((0, top, W, top + img_area))
-    # 1920の上部に貼り付け、下部はダーク背景
-    bg = Image.new("RGB", (W, H), (18, 18, 18))
-    bg.paste(img, (0, 0))
-    return np.array(bg)[:, :, ::-1]
+    if new_h < H:
+        # 高さが足りない場合は高さ基準でリサイズ
+        scale = H / h
+        new_w = int(w * scale)
+        img = img.resize((new_w, H), Image.LANCZOS)
+        left = (new_w - W) // 2
+        img = img.crop((left, 0, left + W, H))
+    else:
+        top = (new_h - H) // 2
+        img = img.crop((0, top, W, top + H))
+    return np.array(img)[:, :, ::-1]
 
 
 def add_telop(frame_bgr, main_text, sub_text, is_qr=False):
@@ -60,16 +63,22 @@ def add_telop(frame_bgr, main_text, sub_text, is_qr=False):
     if is_qr or (not main_text and not sub_text):
         return np.array(img_pil)[:, :, ::-1]
 
+    # 下部グラデーション帯を画像に重ねる
+    overlay = Image.new("RGBA", img_pil.size, (0, 0, 0, 0))
+    ov_draw = ImageDraw.Draw(overlay)
+    grad_h = 500
+    for i in range(grad_h):
+        alpha = int(210 * (i / grad_h) ** 1.4)
+        ov_draw.rectangle([0, H - grad_h + i, W, H - grad_h + i + 1], fill=(0, 0, 0, alpha))
+    img_pil = Image.alpha_composite(img_pil.convert("RGBA"), overlay).convert("RGB")
     draw = ImageDraw.Draw(img_pil)
 
-    # テロップエリアは画像下（y=1080〜1920）のダーク帯に描画
-    TEXT_Y_START = 1120
-
     if main_text:
-        fsize = 58
+        fsize = 62
         font = ImageFont.truetype(FONT_PATH, fsize)
         lines = main_text.split("\n")
-        y = TEXT_Y_START
+        total_h = len(lines) * (fsize + 14)
+        y = H - 160 - total_h - (50 if sub_text else 0)
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
@@ -79,12 +88,12 @@ def add_telop(frame_bgr, main_text, sub_text, is_qr=False):
             y += fsize + 14
 
     if sub_text:
-        fsize_s = 34
+        fsize_s = 36
         font_s = ImageFont.truetype(FONT_PATH, fsize_s)
         bbox = draw.textbbox((0, 0), sub_text, font=font_s)
         tw = bbox[2] - bbox[0]
         x = (W - tw) // 2
-        y_s = TEXT_Y_START + 160
+        y_s = H - 100
         draw.text((x + 1, y_s + 1), sub_text, font=font_s, fill=(0, 0, 0, 140))
         draw.text((x, y_s), sub_text, font=font_s, fill=(180, 160, 120))
 
