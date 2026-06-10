@@ -21,10 +21,10 @@ slides = [
     ("gp_20.jpg",    "旬の魚が、今夜も揃っています。",                  ""),
     ("gp_43.jpg",    "夏酒、入荷続々。",                                "旬の一品と、ゆっくりどうぞ"),
     ("gp_60 (1).jpg","サワーはノンアルでも\nご用意できます。",           ""),
-    ("gp_52.jpg",    "おでんはもちろん\n一品料理も豊富に。",            ""),
+    ("__一品_0007__", "おでんはもちろん\n一品料理も豊富に。", ""),
     ("gp_53.jpg",    "期間限定、\n季節のメニューも。",                  ""),
-    ("gp_55.jpg",    "〆のおでんまで\nゆっくりと。",                    ""),
-    ("gp_60 (1).jpg","また来たくなる\n味がある。",                      ""),
+    ("__0002__",     "〆のおでんまで\nゆっくりと。",  ""),
+    ("__おでん釜__", "また来たくなる\n味がある。",           ""),
     (None,           "",                                                 ""),  # QR: テロップなし
 ]
 
@@ -99,7 +99,13 @@ for i, (fname, main_text, sub_text) in enumerate(slides):
 
     actual_fname = fname
     if fname is None:
-        actual_fname = next(f for f in os.listdir(WP_DIR) if "QR" in f or "おでん" in f)
+        actual_fname = next(f for f in os.listdir(WP_DIR) if "QR" in f)
+    elif fname == "__一品_0007__":
+        actual_fname = next(f for f in os.listdir(WP_DIR) if "一品" in f and "0007" in f)
+    elif fname == "__0002__":
+        actual_fname = next(f for f in os.listdir(WP_DIR) if "0002" in f)
+    elif fname == "__おでん釜__":
+        actual_fname = next(f for f in os.listdir(WP_DIR) if "0007" in f and "一品" not in f and not f.startswith("gp"))
     raw = load_img(actual_fname, fit=is_qr)
     frame = add_telop(raw, main_text, sub_text, is_qr=is_qr)
 
